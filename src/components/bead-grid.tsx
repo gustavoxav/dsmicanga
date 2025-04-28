@@ -4,12 +4,12 @@ import { useState, useEffect } from "react"
 import { Box } from "@mui/material"
 
 interface BeadGridProps {
-  beadColors: string[][]
-  onColorBead: (rowIndex: number, colIndex: number) => void
-  beadSize: number
-  hiddenBeads: Set<string>
-  mode: "paint" | "delete"
-  centerAligned: boolean
+  readonly beadColors: string[][]
+  readonly onColorBead: (rowIndex: number, colIndex: number) => void
+  readonly beadSize: number
+  readonly hiddenBeads: Set<string>
+  readonly mode: "paint" | "delete" | "erase"
+  readonly centerAligned: boolean
 }
 
 export function BeadGrid({ beadColors, onColorBead, beadSize, hiddenBeads, mode, centerAligned }: BeadGridProps) {
@@ -117,7 +117,6 @@ export function BeadGrid({ beadColors, onColorBead, beadSize, hiddenBeads, mode,
                     onMouseUp={handleMouseUp}
                     onTouchStart={() => handleMouseDown(rowIndex, colIndex)}
                     onTouchMove={(e) => {
-                      // Prevenir o comportamento padrão de rolagem em dispositivos touch
                       e.preventDefault()
                       const touch = e.touches[0]
                       const element = document.elementFromPoint(touch.clientX, touch.clientY)
