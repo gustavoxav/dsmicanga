@@ -10,13 +10,23 @@ interface BeadGridProps {
   readonly hiddenBeads: Set<string>
   readonly mode: "paint" | "delete" | "erase"
   readonly centerAligned: boolean
+  readonly onPaintingStateChange?: (isPainting: boolean) => void
 }
 
-export function BeadGrid({ beadColors, onColorBead, beadSize, hiddenBeads, mode, centerAligned }: BeadGridProps) {
+export function BeadGrid({
+  beadColors,
+  onColorBead,
+  beadSize,
+  hiddenBeads,
+  mode,
+  centerAligned,
+  onPaintingStateChange,
+}: BeadGridProps) {
   const [isMouseDown, setIsMouseDown] = useState(false)
 
   const handleMouseDown = (rowIndex: number, colIndex: number) => {
     setIsMouseDown(true)
+    onPaintingStateChange?.(true)
     onColorBead(rowIndex, colIndex)
   }
 
@@ -28,11 +38,15 @@ export function BeadGrid({ beadColors, onColorBead, beadSize, hiddenBeads, mode,
 
   const handleMouseUp = () => {
     setIsMouseDown(false)
+    onPaintingStateChange?.(false)
   }
 
   useEffect(() => {
     const handleGlobalMouseUp = () => {
-      setIsMouseDown(false)
+      if (isMouseDown) {
+        setIsMouseDown(false)
+        onPaintingStateChange?.(false)
+      }
     }
 
     window.addEventListener("mouseup", handleGlobalMouseUp)
@@ -42,7 +56,22 @@ export function BeadGrid({ beadColors, onColorBead, beadSize, hiddenBeads, mode,
       window.removeEventListener("mouseup", handleGlobalMouseUp)
       window.removeEventListener("touchend", handleGlobalMouseUp)
     }
-  }, [])
+  }, [isMouseDown, onPaintingStateChange])
+
+  // Prevenir comportamento padrão de eventos touch para evitar scroll durante a pintura
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isMouseDown) {
+        e.preventDefault()
+      }
+    }
+
+    document.addEventListener("touchmove", handleTouchMove, { passive: false })
+
+    return () => {
+      document.removeEventListener("touchmove", handleTouchMove)
+    }
+  }, [isMouseDown])
 
   const maxBeadsInRow = beadColors[0]?.length || 0
 
@@ -115,7 +144,10 @@ export function BeadGrid({ beadColors, onColorBead, beadSize, hiddenBeads, mode,
                     onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
                     onMouseEnter={() => handleMouseEnter(rowIndex, colIndex)}
                     onMouseUp={handleMouseUp}
-                    onTouchStart={() => handleMouseDown(rowIndex, colIndex)}
+                    onTouchStart={(e) => {
+                      e.preventDefault() // Prevenir comportamento padrão
+                      handleMouseDown(rowIndex, colIndex)
+                    }}
                     onTouchMove={(e) => {
                       e.preventDefault()
                       const touch = e.touches[0]
@@ -125,6 +157,10 @@ export function BeadGrid({ beadColors, onColorBead, beadSize, hiddenBeads, mode,
                         const [r, c] = beadId.split("-").map(Number)
                         handleMouseEnter(r, c)
                       }
+                    }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault()
+                      handleMouseUp()
                     }}
                     data-bead-id={`${rowIndex}-${colIndex}`}
                   />

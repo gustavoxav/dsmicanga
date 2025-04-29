@@ -24,10 +24,15 @@ import {
   Backspace,
   RestartAlt,
   Brush,
+  FormatColorReset,
 } from "@mui/icons-material";
 import { ColorPicker } from "@/components/color-picker";
 import { BeadGrid } from "@/components/bead-grid";
 import { useMobile } from "@/hooks/use-mobile";
+import { Footer } from "@/components/footer";
+
+// Cor padrão para as miçangas
+const DEFAULT_BEAD_COLOR = "#e5e7eb";
 
 function getRandomColor() {
   return (
@@ -55,15 +60,34 @@ export default function Home() {
   const [deletedBeads, setDeletedBeads] = useState<DeletedBead[]>([]);
   const [hiddenBeads, setHiddenBeads] = useState<Set<string>>(new Set());
   const [centerAligned, setCenterAligned] = useState(false);
+  const [isPainting, setIsPainting] = useState(false);
 
   useEffect(() => {
     const newGrid = Array(gridSize.y)
       .fill(0)
-      .map(() => Array(gridSize.x).fill("#e5e7eb"));
+      .map(() => Array(gridSize.x).fill(DEFAULT_BEAD_COLOR));
     setBeadColors(newGrid);
     setDeletedBeads([]);
     setHiddenBeads(new Set());
   }, [gridSize]);
+
+  // Efeito para desabilitar o scroll quando estiver pintando em dispositivos móveis
+  useEffect(() => {
+    if (isMobile) {
+      if (isPainting) {
+        document.body.style.overflow = "hidden";
+        document.body.style.touchAction = "none";
+      } else {
+        document.body.style.overflow = "";
+        document.body.style.touchAction = "";
+      }
+
+      return () => {
+        document.body.style.overflow = "";
+        document.body.style.touchAction = "";
+      };
+    }
+  }, [isPainting, isMobile]);
 
   const handleColorBead = (rowIndex: number, colIndex: number) => {
     if (mode === "paint") {
@@ -90,10 +114,7 @@ export default function Home() {
       }
     } else if (mode === "erase") {
       const newBeadColors = [...beadColors];
-      newBeadColors[rowIndex][colIndex] =
-        newBeadColors[rowIndex][colIndex] === selectedColor
-          ? "#e5e7eb"
-          : selectedColor;
+      newBeadColors[rowIndex][colIndex] = DEFAULT_BEAD_COLOR;
       setBeadColors(newBeadColors);
     }
   };
@@ -124,7 +145,7 @@ export default function Home() {
   const handleClearGrid = () => {
     const newGrid = Array(gridSize.y)
       .fill(0)
-      .map(() => Array(gridSize.x).fill("#e5e7eb"));
+      .map(() => Array(gridSize.x).fill(DEFAULT_BEAD_COLOR));
     setBeadColors(newGrid);
     setDeletedBeads([]);
     setHiddenBeads(new Set());
@@ -171,203 +192,250 @@ export default function Home() {
     setCenterAligned(event.target.checked);
   };
 
+  const handleEraser = () => {
+    setMode("erase");
+  };
+
+  const handlePaintingStateChange = (isPainting: boolean) => {
+    setIsPainting(isPainting);
+  };
+
   return (
-    <Container maxWidth="lg" className="pt-4 pb-8">
-      <Typography
-        variant="h5"
-        component="h1"
-        fontWeight="bold"
-        className="text-center">
-        Crie sua Arte em Miçanga aqui!
-      </Typography>
+    <div className="flex flex-col min-h-screen">
+      <Container maxWidth="lg" className="pt-4 pb-8 flex-grow">
+        <Typography
+          variant="h5"
+          component="h1"
+          fontWeight="bold"
+          className="text-center">
+          Crie sua Arte em Miçanga aqui!
+        </Typography>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-2">
-        <Paper
-          className="p-4 col-span-1 md:col-span-1"
-          sx={{ background: "#f8f8f8" }}>
-          <Typography variant="h6" fontWeight="bold" className="mb-4 bold">
-            Configurações
-          </Typography>
-
-          <Typography gutterBottom variant="subtitle2" sx={{ marginBottom: 0 }}>
-            Largura (X): {gridSize.x}
-          </Typography>
-          <Slider
-            value={gridSize.x}
-            onChange={(_, value) => setGridSize({ ...gridSize, x: value })}
-            min={5}
-            max={30}
-            step={1}
-            marks
-            valueLabelDisplay="auto"
-            sx={{ color: "#137b8b" }}
-          />
-
-          <Typography gutterBottom variant="subtitle2" sx={{ marginBottom: 0 }}>
-            Altura (Y): {gridSize.y}
-          </Typography>
-          <Slider
-            value={gridSize.y}
-            onChange={(_, value) => setGridSize({ ...gridSize, y: value })}
-            min={5}
-            max={30}
-            step={1}
-            marks
-            valueLabelDisplay="auto"
-            sx={{ color: "#137b8b" }}
-          />
-
-          <div>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={centerAligned}
-                  onChange={handleCenterAlignChange}
-                  color="primary"
-                />
-              }
-              label="Alinhar miçangas ao centro"
-            />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              className="block mt-1">
-              Útil para designs com linhas de tamanhos diferentes
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-2">
+          <Paper
+            className="p-4 col-span-1 md:col-span-1"
+            sx={{ background: "#f8f8f8" }}>
+            <Typography variant="h6" fontWeight="bold" className="mb-4 bold">
+              Configurações
             </Typography>
-          </div>
 
-          <ColorPicker
-            selectedColor={selectedColor}
-            savedColors={savedColors}
-            onColorChange={setSelectedColor}
-            onSaveColor={handleSaveColor}
-            onUpdateColor={handleUpdateColor}
-          />
-        </Paper>
+            <Typography
+              gutterBottom
+              variant="subtitle2"
+              sx={{ marginBottom: 0 }}>
+              Largura (X): {gridSize.x}
+            </Typography>
+            <Slider
+              value={gridSize.x}
+              onChange={(_, value) =>
+                setGridSize({ ...gridSize, x: value as number })
+              }
+              min={5}
+              max={30}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+              sx={{ color: "#137b8b" }}
+            />
 
-        <Paper
-          className="p-4 col-span-1 md:col-span-2"
-          sx={{ background: "#f8f8f8" }}>
-          <div className="flex flex-col justify-between items-center mb-4">
-            <div className="flex flex-wrap justify-center items-center gap-4">
-              <ToggleButtonGroup
-                value={mode}
-                exclusive
-                onChange={handleModeChange}
-                aria-label="Modo de edição"
-                size="small">
-                <ToggleButton value="paint" aria-label="Modo pintar">
-                  <Tooltip title="Modo Pintar">
-                    <div className="flex flex-row items-center gap-1">
-                      <Brush sx={{ color: "#137b8b" }} />
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: "#137b8b",
-                          fontSize: "0.75rem",
-                          marginRight: "2px",
-                        }}>
-                        Pintar
-                      </Typography>
-                    </div>
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="erase" aria-label="Modo excluir">
-                  <Tooltip title="Modo Apagar cor">
-                    <div className="flex flex-row items-center gap-1">
-                      <Backspace sx={{ color: "#a9a9a9" }} />
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "#a9a9a9", fontSize: "0.75rem" }}>
-                        Apagar
-                      </Typography>
-                    </div>
-                  </Tooltip>
-                </ToggleButton>
-                <ToggleButton value="delete" aria-label="Modo excluir">
-                  <Tooltip title="Modo Excluir Miçanga">
-                    <div className="flex flex-row items-center gap-1">
-                      <Delete sx={{ color: "#bd1414", marginRight: "2px" }} />
-                      <Typography
-                        variant="caption"
-                        sx={{ color: "#bd1414", fontSize: "0.75rem" }}>
-                        Excluir Miçanga
-                      </Typography>
-                    </div>
-                  </Tooltip>
-                </ToggleButton>
-              </ToggleButtonGroup>
+            <Typography
+              gutterBottom
+              variant="subtitle2"
+              sx={{ marginBottom: 0 }}>
+              Altura (Y): {gridSize.y}
+            </Typography>
+            <Slider
+              value={gridSize.y}
+              onChange={(_, value) =>
+                setGridSize({ ...gridSize, y: value as number })
+              }
+              min={5}
+              max={30}
+              step={1}
+              marks
+              valueLabelDisplay="auto"
+              sx={{ color: "#137b8b" }}
+            />
 
-              <div className="flex items-center gap-2">
-                <Tooltip title="Diminuir Zoom">
+            <div>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={centerAligned}
+                    onChange={handleCenterAlignChange}
+                    color="primary"
+                  />
+                }
+                label="Alinhar miçangas ao centro"
+              />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                className="block mt-1">
+                Útil para designs com linhas de tamanhos diferentes
+              </Typography>
+            </div>
+
+            <ColorPicker
+              selectedColor={selectedColor}
+              savedColors={savedColors}
+              onColorChange={setSelectedColor}
+              onSaveColor={handleSaveColor}
+              onUpdateColor={handleUpdateColor}
+            />
+
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<FormatColorReset />}
+              onClick={handleEraser}
+              sx={{
+                mt: 2,
+                borderColor: mode === "erase" ? "#137b8b" : "rgba(0,0,0,0.23)",
+                color: mode === "erase" ? "#137b8b" : "rgba(0,0,0,0.87)",
+                backgroundColor:
+                  mode === "erase" ? "rgba(19,123,139,0.08)" : "transparent",
+                "&:hover": {
+                  backgroundColor:
+                    mode === "erase"
+                      ? "rgba(19,123,139,0.12)"
+                      : "rgba(0,0,0,0.04)",
+                },
+              }}>
+              Borracha (Apagar Cor)
+            </Button>
+          </Paper>
+
+          <Paper
+            className="p-4 col-span-1 md:col-span-2"
+            sx={{ background: "#f8f8f8" }}>
+            <div className="flex flex-col justify-between items-center mb-4">
+              <div className="flex flex-wrap justify-center items-center gap-4">
+                <ToggleButtonGroup
+                  value={mode}
+                  exclusive
+                  onChange={handleModeChange}
+                  aria-label="Modo de edição"
+                  size="small">
+                  <ToggleButton value="paint" aria-label="Modo pintar">
+                    <Tooltip title="Modo Pintar">
+                      <div className="flex flex-row items-center gap-1">
+                        <Brush sx={{ color: "#137b8b" }} />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "#137b8b",
+                            fontSize: "0.75rem",
+                            marginRight: "2px",
+                          }}>
+                          Pintar
+                        </Typography>
+                      </div>
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="erase" aria-label="Modo apagar">
+                    <Tooltip title="Modo Apagar cor">
+                      <div className="flex flex-row items-center gap-1">
+                        <Backspace sx={{ color: "#a9a9a9" }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#a9a9a9", fontSize: "0.75rem" }}>
+                          Apagar
+                        </Typography>
+                      </div>
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="delete" aria-label="Modo excluir">
+                    <Tooltip title="Modo Excluir Miçanga">
+                      <div className="flex flex-row items-center gap-1">
+                        <Delete sx={{ color: "#bd1414", marginRight: "2px" }} />
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#bd1414", fontSize: "0.75rem" }}>
+                          Excluir Miçanga
+                        </Typography>
+                      </div>
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+
+                <div className="flex items-center gap-2">
+                  <Tooltip title="Diminuir Zoom">
+                    <Button
+                      onClick={handleZoomOut}
+                      size="small"
+                      sx={{ background: "#f3f3f3" }}>
+                      <ZoomOut sx={{ color: "#137b8b" }} />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title="Aumentar Zoom">
+                    <Button
+                      onClick={handleZoomIn}
+                      sx={{ background: "#f3f3f3" }}
+                      size="small">
+                      <ZoomIn sx={{ color: "#137b8b" }} />
+                    </Button>
+                  </Tooltip>
+                </div>
+                <Tooltip title="Limpar Grade">
                   <Button
-                    onClick={handleZoomOut}
-                    size="small"
-                    sx={{ background: "#f3f3f3" }}>
-                    <ZoomOut sx={{ color: "#137b8b" }} />
-                  </Button>
-                </Tooltip>
-                <Tooltip title="Aumentar Zoom">
-                  <Button
-                    onClick={handleZoomIn}
-                    sx={{ background: "#f3f3f3" }}
-                    size="small">
-                    <ZoomIn sx={{ color: "#137b8b" }} />
+                    variant="outlined"
+                    sx={{
+                      background: "#bd1414",
+                      color: "#fff",
+                      width: "150px",
+                    }}
+                    fullWidth
+                    className="mt-4"
+                    onClick={handleClearGrid}>
+                    Limpar Grade
                   </Button>
                 </Tooltip>
               </div>
-              <Tooltip title="Limpar Grade">
-                <Button
-                  variant="outlined"
-                  sx={{ background: "#bd1414", color: "#fff", width: "150px" }}
-                  fullWidth
-                  className="mt-4"
-                  onClick={handleClearGrid}>
-                  Limpar Grade
-                </Button>
-              </Tooltip>
             </div>
-          </div>
 
-          {mode === "delete" && (
-            <div className="flex gap-2 mb-4">
-              <Tooltip title="Desfazer última exclusão">
-                <span>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={handleUndoDelete}
-                    disabled={deletedBeads.length === 0}>
-                    <Undo className="mr-1" /> Desfazer
-                  </Button>
-                </span>
-              </Tooltip>
-              <Tooltip title="Restaurar todas as miçangas">
-                <span>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={handleRestoreAll}
-                    disabled={deletedBeads.length === 0}>
-                    <RestartAlt className="mr-1" /> Restaurar Todas
-                  </Button>
-                </span>
-              </Tooltip>
-            </div>
-          )}
+            {mode === "delete" && (
+              <div className="flex gap-2 mb-4">
+                <Tooltip title="Desfazer última exclusão">
+                  <span>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handleUndoDelete}
+                      disabled={deletedBeads.length === 0}>
+                      <Undo className="mr-1" /> Desfazer
+                    </Button>
+                  </span>
+                </Tooltip>
+                <Tooltip title="Restaurar todas as miçangas">
+                  <span>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handleRestoreAll}
+                      disabled={deletedBeads.length === 0}>
+                      <RestartAlt className="mr-1" /> Restaurar Todas
+                    </Button>
+                  </span>
+                </Tooltip>
+              </div>
+            )}
 
-          <Box className="flex justify-center overflow-auto">
-            <BeadGrid
-              beadColors={beadColors}
-              onColorBead={handleColorBead}
-              beadSize={beadSize}
-              hiddenBeads={hiddenBeads}
-              mode={mode}
-              centerAligned={centerAligned}
-            />
-          </Box>
-        </Paper>
-      </div>
-    </Container>
+            <Box className="flex justify-center overflow-auto">
+              <BeadGrid
+                beadColors={beadColors}
+                onColorBead={handleColorBead}
+                beadSize={beadSize}
+                hiddenBeads={hiddenBeads}
+                mode={mode}
+                centerAligned={centerAligned}
+                onPaintingStateChange={handlePaintingStateChange}
+              />
+            </Box>
+          </Paper>
+        </div>
+      </Container>
+      <Footer />
+    </div>
   );
 }
