@@ -1,38 +1,16 @@
-"use client";
+"use client"
 
-import type React from "react";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { Container, Typography, Box, Paper } from "@mui/material"
+import { BeadGrid } from "@/components/bead-grid"
+import { ConfigPanel } from "@/components/config-panel"
+import { ToolsPanel } from "@/components/tools-panel"
+import { DeleteControls } from "@/components/delete-controls"
+import { Footer } from "@/components/footer"
+import { useMobile } from "@/hooks/use-mobile"
 
-import { useState, useEffect } from "react";
-import {
-  Container,
-  Typography,
-  Slider,
-  Box,
-  Paper,
-  Button,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  FormControlLabel,
-  Switch,
-} from "@mui/material";
-import {
-  ZoomIn,
-  ZoomOut,
-  Delete,
-  Undo,
-  Backspace,
-  RestartAlt,
-  Brush,
-  FormatColorReset,
-} from "@mui/icons-material";
-import { ColorPicker } from "@/components/color-picker";
-import { BeadGrid } from "@/components/bead-grid";
-import { useMobile } from "@/hooks/use-mobile";
-import { Footer } from "@/components/footer";
-
-// Cor padrão para as miçangas
-const DEFAULT_BEAD_COLOR = "#e5e7eb";
+const DEFAULT_BEAD_COLOR = "#e5e7eb"
 
 function getRandomColor() {
   return (
@@ -40,385 +18,207 @@ function getRandomColor() {
     Math.floor(Math.random() * 16777215)
       .toString(16)
       .padStart(6, "0")
-  );
+  )
 }
 
 type DeletedBead = {
-  rowIndex: number;
-  colIndex: number;
-  color: string;
-};
+  rowIndex: number
+  colIndex: number
+  color: string
+}
 
 export default function Home() {
-  const isMobile = useMobile();
-  const [gridSize, setGridSize] = useState({ x: 10, y: 10 });
-  const [selectedColor, setSelectedColor] = useState(getRandomColor());
-  const [savedColors, setSavedColors] = useState<string[]>([getRandomColor()]);
-  const [beadColors, setBeadColors] = useState<string[][]>([]);
-  const [beadSize, setBeadSize] = useState(isMobile ? 20 : 30);
-  const [mode, setMode] = useState<"paint" | "delete" | "erase">("paint");
-  const [deletedBeads, setDeletedBeads] = useState<DeletedBead[]>([]);
-  const [hiddenBeads, setHiddenBeads] = useState<Set<string>>(new Set());
-  const [centerAligned, setCenterAligned] = useState(false);
-  const [isPainting, setIsPainting] = useState(false);
+  const isMobile = useMobile()
+  const [gridSize, setGridSize] = useState({ x: 10, y: 10 })
+  const [selectedColor, setSelectedColor] = useState(getRandomColor())
+  const [savedColors, setSavedColors] = useState<string[]>([getRandomColor()])
+  const [beadColors, setBeadColors] = useState<string[][]>([])
+  const [beadSize, setBeadSize] = useState(isMobile ? 20 : 30)
+  const [mode, setMode] = useState<"paint" | "delete" | "erase">("paint")
+  const [deletedBeads, setDeletedBeads] = useState<DeletedBead[]>([])
+  const [hiddenBeads, setHiddenBeads] = useState<Set<string>>(new Set())
+  const [centerAligned, setCenterAligned] = useState(false)
+  const [isPainting, setIsPainting] = useState(false)
 
   useEffect(() => {
     const newGrid = Array(gridSize.y)
       .fill(0)
-      .map(() => Array(gridSize.x).fill(DEFAULT_BEAD_COLOR));
-    setBeadColors(newGrid);
-    setDeletedBeads([]);
-    setHiddenBeads(new Set());
-  }, [gridSize]);
+      .map(() => Array(gridSize.x).fill(DEFAULT_BEAD_COLOR))
+    setBeadColors(newGrid)
+    setDeletedBeads([])
+    setHiddenBeads(new Set())
+  }, [gridSize])
 
-  // Efeito para desabilitar o scroll quando estiver pintando em dispositivos móveis
   useEffect(() => {
     if (isMobile) {
       if (isPainting) {
-        document.body.style.overflow = "hidden";
-        document.body.style.touchAction = "none";
+        document.body.style.overflow = "hidden"
+        document.body.style.touchAction = "none"
       } else {
-        document.body.style.overflow = "";
-        document.body.style.touchAction = "";
+        document.body.style.overflow = ""
+        document.body.style.touchAction = ""
       }
 
       return () => {
-        document.body.style.overflow = "";
-        document.body.style.touchAction = "";
-      };
+        document.body.style.overflow = ""
+        document.body.style.touchAction = ""
+      }
     }
-  }, [isPainting, isMobile]);
+  }, [isPainting, isMobile])
 
   const handleColorBead = (rowIndex: number, colIndex: number) => {
     if (mode === "paint") {
-      const newBeadColors = [...beadColors];
-      newBeadColors[rowIndex][colIndex] = selectedColor;
-      setBeadColors(newBeadColors);
+      const newBeadColors = [...beadColors]
+      newBeadColors[rowIndex][colIndex] = selectedColor
+      setBeadColors(newBeadColors)
 
       if (hiddenBeads.has(`${rowIndex}-${colIndex}`)) {
-        const newHiddenBeads = new Set(hiddenBeads);
-        newHiddenBeads.delete(`${rowIndex}-${colIndex}`);
-        setHiddenBeads(newHiddenBeads);
+        const newHiddenBeads = new Set(hiddenBeads)
+        newHiddenBeads.delete(`${rowIndex}-${colIndex}`)
+        setHiddenBeads(newHiddenBeads)
       }
     } else if (mode === "delete") {
-      const beadKey = `${rowIndex}-${colIndex}`;
+      const beadKey = `${rowIndex}-${colIndex}`
       if (!hiddenBeads.has(beadKey)) {
-        setDeletedBeads([
-          ...deletedBeads,
-          { rowIndex, colIndex, color: beadColors[rowIndex][colIndex] },
-        ]);
+        setDeletedBeads([...deletedBeads, { rowIndex, colIndex, color: beadColors[rowIndex][colIndex] }])
 
-        const newHiddenBeads = new Set(hiddenBeads);
-        newHiddenBeads.add(beadKey);
-        setHiddenBeads(newHiddenBeads);
+        const newHiddenBeads = new Set(hiddenBeads)
+        newHiddenBeads.add(beadKey)
+        setHiddenBeads(newHiddenBeads)
       }
     } else if (mode === "erase") {
-      const newBeadColors = [...beadColors];
-      newBeadColors[rowIndex][colIndex] = DEFAULT_BEAD_COLOR;
-      setBeadColors(newBeadColors);
+      const newBeadColors = [...beadColors]
+      newBeadColors[rowIndex][colIndex] = DEFAULT_BEAD_COLOR
+      setBeadColors(newBeadColors)
     }
-  };
+  }
+
+  const handleResetBead = (rowIndex: number, colIndex: number) => {
+    const newBeadColors = [...beadColors]
+    newBeadColors[rowIndex][colIndex] = DEFAULT_BEAD_COLOR
+    setBeadColors(newBeadColors)
+  }
+
+  const handleFillGrid = (color: string) => {
+    const newBeadColors = beadColors.map((row, rowIndex) =>
+      row.map((cellColor, colIndex) => {
+        return hiddenBeads.has(`${rowIndex}-${colIndex}`) ? cellColor : color
+      }),
+    )
+    setBeadColors(newBeadColors)
+  }
 
   const handleSaveColor = (color: string) => {
     if (savedColors.includes(color)) {
-      setSelectedColor(color);
-      return;
+      setSelectedColor(color)
+      return
     }
 
     if (savedColors.length < 8) {
-      setSavedColors([...savedColors, color]);
+      setSavedColors([...savedColors, color])
     } else {
-      const newColors = [...savedColors];
-      newColors[newColors.length - 1] = color;
-      setSavedColors(newColors);
+      const newColors = [...savedColors]
+      newColors[newColors.length - 1] = color
+      setSavedColors(newColors)
     }
-    setSelectedColor(color);
-  };
+    setSelectedColor(color)
+  }
 
   const handleUpdateColor = (index: number, color: string) => {
-    const newColors = [...savedColors];
-    newColors[index] = color;
-    setSavedColors(newColors);
-    setSelectedColor(color);
-  };
+    const newColors = [...savedColors]
+    newColors[index] = color
+    setSavedColors(newColors)
+    setSelectedColor(color)
+  }
 
   const handleClearGrid = () => {
     const newGrid = Array(gridSize.y)
       .fill(0)
-      .map(() => Array(gridSize.x).fill(DEFAULT_BEAD_COLOR));
-    setBeadColors(newGrid);
-    setDeletedBeads([]);
-    setHiddenBeads(new Set());
-  };
+      .map(() => Array(gridSize.x).fill(DEFAULT_BEAD_COLOR))
+    setBeadColors(newGrid)
+    setDeletedBeads([])
+    setHiddenBeads(new Set())
+  }
 
   const handleZoomIn = () => {
-    setBeadSize((prev) => Math.min(prev + 5, 60));
-  };
+    setBeadSize((prev) => Math.min(prev + 5, 60))
+  }
 
   const handleZoomOut = () => {
-    setBeadSize((prev) => Math.max(prev - 5, 10));
-  };
+    setBeadSize((prev) => Math.max(prev - 5, 10))
+  }
 
   const handleUndoDelete = () => {
     if (deletedBeads.length > 0) {
-      const lastDeleted = deletedBeads[deletedBeads.length - 1];
-      const newDeletedBeads = [...deletedBeads];
-      newDeletedBeads.pop();
-      setDeletedBeads(newDeletedBeads);
+      const lastDeleted = deletedBeads[deletedBeads.length - 1]
+      const newDeletedBeads = [...deletedBeads]
+      newDeletedBeads.pop()
+      setDeletedBeads(newDeletedBeads)
 
-      const newHiddenBeads = new Set(hiddenBeads);
-      newHiddenBeads.delete(`${lastDeleted.rowIndex}-${lastDeleted.colIndex}`);
-      setHiddenBeads(newHiddenBeads);
+      const newHiddenBeads = new Set(hiddenBeads)
+      newHiddenBeads.delete(`${lastDeleted.rowIndex}-${lastDeleted.colIndex}`)
+      setHiddenBeads(newHiddenBeads)
     }
-  };
+  }
 
   const handleRestoreAll = () => {
-    setDeletedBeads([]);
-    setHiddenBeads(new Set());
-  };
+    setDeletedBeads([])
+    setHiddenBeads(new Set())
+  }
 
-  const handleModeChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newMode: "paint" | "delete" | "erase" | null
-  ) => {
+  const handleModeChange = (event: React.MouseEvent<HTMLElement>, newMode: "paint" | "delete" | "erase" | null) => {
     if (newMode !== null) {
-      setMode(newMode);
+      setMode(newMode)
     }
-  };
-
-  const handleCenterAlignChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setCenterAligned(event.target.checked);
-  };
+  }
 
   const handleEraser = () => {
-    setMode("erase");
-  };
+    setMode("erase")
+  }
 
   const handlePaintingStateChange = (isPainting: boolean) => {
-    setIsPainting(isPainting);
-  };
+    setIsPainting(isPainting)
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
       <Container maxWidth="lg" className="pt-4 pb-8 flex-grow">
-        <Typography
-          variant="h5"
-          component="h1"
-          fontWeight="bold"
-          className="text-center">
+        <Typography variant="h5" component="h1" fontWeight="bold" className="text-center">
           Crie sua Arte em Miçanga aqui!
         </Typography>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-2">
-          <Paper
-            className="p-4 col-span-1 md:col-span-1"
-            sx={{ background: "#f8f8f8" }}>
-            <Typography variant="h6" fontWeight="bold" className="mb-4 bold">
-              Configurações
-            </Typography>
+          <ConfigPanel
+            gridSize={gridSize}
+            setGridSize={setGridSize}
+            centerAligned={centerAligned}
+            setCenterAligned={setCenterAligned}
+            selectedColor={selectedColor}
+            savedColors={savedColors}
+            onColorChange={setSelectedColor}
+            onSaveColor={handleSaveColor}
+            onUpdateColor={handleUpdateColor}
+            onEraser={handleEraser}
+            mode={mode}
+          />
 
-            <Typography
-              gutterBottom
-              variant="subtitle2"
-              sx={{ marginBottom: 0 }}>
-              Largura (X): {gridSize.x}
-            </Typography>
-            <Slider
-              value={gridSize.x}
-              onChange={(_, value) =>
-                setGridSize({ ...gridSize, x: value as number })
-              }
-              min={5}
-              max={30}
-              step={1}
-              marks
-              valueLabelDisplay="auto"
-              sx={{ color: "#137b8b" }}
-            />
-
-            <Typography
-              gutterBottom
-              variant="subtitle2"
-              sx={{ marginBottom: 0 }}>
-              Altura (Y): {gridSize.y}
-            </Typography>
-            <Slider
-              value={gridSize.y}
-              onChange={(_, value) =>
-                setGridSize({ ...gridSize, y: value as number })
-              }
-              min={5}
-              max={30}
-              step={1}
-              marks
-              valueLabelDisplay="auto"
-              sx={{ color: "#137b8b" }}
-            />
-
-            <div>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={centerAligned}
-                    onChange={handleCenterAlignChange}
-                    color="primary"
-                  />
-                }
-                label="Alinhar miçangas ao centro"
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                className="block mt-1">
-                Útil para designs com linhas de tamanhos diferentes
-              </Typography>
-            </div>
-
-            <ColorPicker
-              selectedColor={selectedColor}
-              savedColors={savedColors}
-              onColorChange={setSelectedColor}
-              onSaveColor={handleSaveColor}
-              onUpdateColor={handleUpdateColor}
-            />
-
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<FormatColorReset />}
-              onClick={handleEraser}
-              sx={{
-                mt: 2,
-                borderColor: mode === "erase" ? "#137b8b" : "rgba(0,0,0,0.23)",
-                color: mode === "erase" ? "#137b8b" : "rgba(0,0,0,0.87)",
-                backgroundColor:
-                  mode === "erase" ? "rgba(19,123,139,0.08)" : "transparent",
-                "&:hover": {
-                  backgroundColor:
-                    mode === "erase"
-                      ? "rgba(19,123,139,0.12)"
-                      : "rgba(0,0,0,0.04)",
-                },
-              }}>
-              Borracha (Apagar Cor)
-            </Button>
-          </Paper>
-
-          <Paper
-            className="p-4 col-span-1 md:col-span-2"
-            sx={{ background: "#f8f8f8" }}>
+          <Paper className="p-4 col-span-1 md:col-span-2" sx={{ background: "#f8f8f8" }}>
             <div className="flex flex-col justify-between items-center mb-4">
-              <div className="flex flex-wrap justify-center items-center gap-4">
-                <ToggleButtonGroup
-                  value={mode}
-                  exclusive
-                  onChange={handleModeChange}
-                  aria-label="Modo de edição"
-                  size="small">
-                  <ToggleButton value="paint" aria-label="Modo pintar">
-                    <Tooltip title="Modo Pintar">
-                      <div className="flex flex-row items-center gap-1">
-                        <Brush sx={{ color: "#137b8b" }} />
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "#137b8b",
-                            fontSize: "0.75rem",
-                            marginRight: "2px",
-                          }}>
-                          Pintar
-                        </Typography>
-                      </div>
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton value="erase" aria-label="Modo apagar">
-                    <Tooltip title="Modo Apagar cor">
-                      <div className="flex flex-row items-center gap-1">
-                        <Backspace sx={{ color: "#a9a9a9" }} />
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "#a9a9a9", fontSize: "0.75rem" }}>
-                          Apagar
-                        </Typography>
-                      </div>
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton value="delete" aria-label="Modo excluir">
-                    <Tooltip title="Modo Excluir Miçanga">
-                      <div className="flex flex-row items-center gap-1">
-                        <Delete sx={{ color: "#bd1414", marginRight: "2px" }} />
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "#bd1414", fontSize: "0.75rem" }}>
-                          Excluir Miçanga
-                        </Typography>
-                      </div>
-                    </Tooltip>
-                  </ToggleButton>
-                </ToggleButtonGroup>
-
-                <div className="flex items-center gap-2">
-                  <Tooltip title="Diminuir Zoom">
-                    <Button
-                      onClick={handleZoomOut}
-                      size="small"
-                      sx={{ background: "#f3f3f3" }}>
-                      <ZoomOut sx={{ color: "#137b8b" }} />
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="Aumentar Zoom">
-                    <Button
-                      onClick={handleZoomIn}
-                      sx={{ background: "#f3f3f3" }}
-                      size="small">
-                      <ZoomIn sx={{ color: "#137b8b" }} />
-                    </Button>
-                  </Tooltip>
-                </div>
-                <Tooltip title="Limpar Grade">
-                  <Button
-                    variant="outlined"
-                    sx={{
-                      background: "#bd1414",
-                      color: "#fff",
-                      width: "150px",
-                    }}
-                    fullWidth
-                    className="mt-4"
-                    onClick={handleClearGrid}>
-                    Limpar Grade
-                  </Button>
-                </Tooltip>
-              </div>
+              <ToolsPanel
+                mode={mode}
+                onModeChange={handleModeChange}
+                onZoomIn={handleZoomIn}
+                onZoomOut={handleZoomOut}
+                onClearGrid={handleClearGrid}
+              />
             </div>
 
             {mode === "delete" && (
-              <div className="flex gap-2 mb-4">
-                <Tooltip title="Desfazer última exclusão">
-                  <span>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={handleUndoDelete}
-                      disabled={deletedBeads.length === 0}>
-                      <Undo className="mr-1" /> Desfazer
-                    </Button>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Restaurar todas as miçangas">
-                  <span>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={handleRestoreAll}
-                      disabled={deletedBeads.length === 0}>
-                      <RestartAlt className="mr-1" /> Restaurar Todas
-                    </Button>
-                  </span>
-                </Tooltip>
-              </div>
+              <DeleteControls
+                onUndoDelete={handleUndoDelete}
+                onRestoreAll={handleRestoreAll}
+                hasDeletedBeads={deletedBeads.length > 0}
+              />
             )}
 
             <Box className="flex justify-center overflow-auto">
@@ -430,6 +230,9 @@ export default function Home() {
                 mode={mode}
                 centerAligned={centerAligned}
                 onPaintingStateChange={handlePaintingStateChange}
+                onResetBead={handleResetBead}
+                onFillGrid={handleFillGrid}
+                selectedColor={selectedColor}
               />
             </Box>
           </Paper>
@@ -437,5 +240,5 @@ export default function Home() {
       </Container>
       <Footer />
     </div>
-  );
+  )
 }

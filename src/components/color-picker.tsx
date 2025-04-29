@@ -5,11 +5,11 @@ import { Box, Typography, Button, Tooltip } from "@mui/material";
 import { HexColorPicker } from "react-colorful";
 
 interface ColorPickerProps {
-  readonly selectedColor: string;
-  readonly savedColors: string[];
-  readonly onColorChange: (color: string) => void;
-  readonly onSaveColor: (color: string) => void;
-  readonly onUpdateColor: (index: number, color: string) => void;
+  selectedColor: string;
+  savedColors: string[];
+  onColorChange: (color: string) => void;
+  onSaveColor: (color: string) => void;
+  onUpdateColor: (index: number, color: string) => void;
 }
 
 export function ColorPicker({
@@ -18,7 +18,7 @@ export function ColorPicker({
   onColorChange,
   onSaveColor,
   onUpdateColor,
-}: ColorPickerProps) {
+}: Readonly<ColorPickerProps>) {
   const [tempColor, setTempColor] = useState(selectedColor);
   const [editingColorIndex, setEditingColorIndex] = useState<number | null>(
     null
