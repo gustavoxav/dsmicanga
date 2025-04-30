@@ -184,7 +184,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <Container maxWidth="lg" className="pt-4 pb-8 flex-grow">
         <Typography variant="h5" component="h1" fontWeight="bold" className="text-center">
-          Crie sua Arte em Miçanga aqui!
+          Crie sua Miçanga!
         </Typography>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-2">
